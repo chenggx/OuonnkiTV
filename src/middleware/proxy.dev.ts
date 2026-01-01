@@ -13,13 +13,16 @@ export function proxyMiddleware(): Plugin {
         try {
           const targetUrl = getTargetUrl(req.url)
           const response = await handleProxyRequest(targetUrl)
-          const text = await response.text()
+
+          // 图片使用 arrayBuffer，文本使用 text
           const contentType = response.headers.get('content-type') || 'application/json'
+          const isImage = contentType.startsWith('image/')
+          const data = isImage ? Buffer.from(await response.arrayBuffer()) : await response.text()
 
           res.setHeader('Access-Control-Allow-Origin', '*')
           res.setHeader('Content-Type', contentType)
           res.writeHead(response.status)
-          res.end(text)
+          res.end(data)
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Unknown error'
           res.writeHead(500, { 'Content-Type': 'application/json' })

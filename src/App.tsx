@@ -1,8 +1,9 @@
 import { OkiLogo, SearchIcon, SettingIcon, CloseIcon } from '@/components/icons'
-import { Button, Input, Chip, Popover, PopoverTrigger, PopoverContent } from '@heroui/react'
+import { Button, Input, Chip, Popover, PopoverTrigger, PopoverContent, Tabs, Tab } from '@heroui/react'
 import React, { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useSearchHistory, useSearch } from '@/hooks'
+import DoubanRecommend from '@/components/DoubanRecommend'
 
 import { useSettingStore } from '@/store/settingStore'
 
@@ -20,6 +21,8 @@ function App() {
   const navigate = useNavigate()
   // 删除控制
   const [isSearchHistoryDeleteOpen, setIsSearchHistoryDeleteOpen] = useState(false)
+  // 当前 Tab
+  const [activeTab, setActiveTab] = useState<'search' | 'recommend'>('search')
 
   const { searchHistory, removeSearchHistoryItem, clearSearchHistory } = useSearchHistory()
   const { search, setSearch, searchMovie } = useSearch()
@@ -164,101 +167,145 @@ function App() {
               }
             />
           </motion.div>
-          {useSettingStore.getState().search.isSearchHistoryVisible && searchHistory.length > 0 && (
-            <motion.div
-              initial={{ filter: isBrowser ? 'opacity(20%)' : 'opacity(100%)' }}
-              whileHover={{
-                filter: 'opacity(100%)',
+
+          {/* Tab 切换 */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+            className="mt-6"
+          >
+            <Tabs
+              selectedKey={activeTab}
+              onSelectionChange={(key) => setActiveTab(key as 'search' | 'recommend')}
+              variant="underlined"
+              classNames={{
+                tabList: 'gap-6',
+                cursor: 'bg-primary',
+                tab: 'px-0 h-8',
               }}
-              transition={{ duration: 0.4 }}
-              className="mt-[3rem] flex w-[88vw] flex-col items-start gap-2 px-4 md:w-[42rem] md:flex-row md:px-0"
             >
-              <p className="text-lg font-bold">搜索历史：</p>
-              <div className="flex flex-col">
-                <div className="flex w-full flex-wrap gap-3 md:w-[34rem]">
-                  <AnimatePresence mode="popLayout">
-                    {searchHistory.map(item => (
-                      <motion.div
-                        key={item.id}
-                        layout
-                        exit={{ opacity: 0, filter: 'blur(5px)' }}
-                        onMouseEnter={() => setHoveredChipId(item.id)}
-                        onMouseLeave={() => setHoveredChipId(null)}
-                      >
-                        <Chip
-                          classNames={{
-                            base: 'cursor-pointer border-2 border-gray-400 hover:border-black hover:scale-101 transition-all duration-300',
-                            content: `transition-all duration-200 ${hoveredChipId === item.id ? 'translate-x-0' : 'translate-x-2'}`,
-                            closeButton: `transition-opacity duration-200 ${hoveredChipId === item.id ? 'opacity-100' : 'opacity-0'}`,
-                          }}
-                          variant="bordered"
-                          size="lg"
-                          onClick={() => searchMovie(item.content)}
-                          onClose={() => {
-                            if (hoveredChipId === item.id) {
-                              removeSearchHistoryItem(item.id)
-                            }
-                          }}
-                        >
-                          {item.content}
-                        </Chip>
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
-                </div>
-                <div className="flex justify-end">
-                  <div className="w-fit">
-                    <Popover
-                      placement={isBrowser ? 'top-end' : 'bottom-start'}
-                      isOpen={isSearchHistoryDeleteOpen}
-                      onOpenChange={setIsSearchHistoryDeleteOpen}
-                      isKeyboardDismissDisabled
-                      crossOffset={isBrowser ? -20 : -5}
-                      classNames={{
-                        base: 'bg-transparent',
-                        content: 'bg-white/20 shadow-lg shadow-gray-500/10 backdrop-blur-xl',
-                      }}
-                    >
-                      <PopoverTrigger>
+              <Tab
+                key="search"
+                title={
+                  <div className="flex items-center gap-2">
+                    <span>搜索</span>
+                  </div>
+                }
+              />
+              <Tab
+                key="recommend"
+                title={
+                  <div className="flex items-center gap-2">
+                    <span>豆瓣推荐</span>
+                  </div>
+                }
+              />
+            </Tabs>
+          </motion.div>
+
+          {/* Tab 内容 */}
+          {activeTab === 'search' ? (
+            /* 搜索历史 */
+            useSettingStore.getState().search.isSearchHistoryVisible && searchHistory.length > 0 && (
+              <motion.div
+                initial={{ filter: isBrowser ? 'opacity(20%)' : 'opacity(100%)' }}
+                whileHover={{
+                  filter: 'opacity(100%)',
+                }}
+                transition={{ duration: 0.4 }}
+                className="mt-[3rem] flex w-[88vw] flex-col items-start gap-2 px-4 md:w-[42rem] md:flex-row md:px-0"
+              >
+                <p className="text-lg font-bold">搜索历史：</p>
+                <div className="flex flex-col">
+                  <div className="flex w-full flex-wrap gap-3 md:w-[34rem]">
+                    <AnimatePresence mode="popLayout">
+                      {searchHistory.map(item => (
                         <motion.div
-                          initial={{ color: '#cccccc' }}
-                          whileHover={{ color: '#999999' }}
-                          transition={{ duration: 0.4 }}
-                          className="flex justify-end gap-2 pt-[1.5rem] pr-[1.8rem] hover:cursor-pointer"
+                          key={item.id}
+                          layout
+                          exit={{ opacity: 0, filter: 'blur(5px)' }}
+                          onMouseEnter={() => setHoveredChipId(item.id)}
+                          onMouseLeave={() => setHoveredChipId(null)}
                         >
-                          <CloseIcon size={20} />
-                          <p className="text-sm">清除全部</p>
+                          <Chip
+                            classNames={{
+                              base: 'cursor-pointer border-2 border-gray-400 hover:border-black hover:scale-101 transition-all duration-300',
+                              content: `transition-all duration-200 ${hoveredChipId === item.id ? 'translate-x-0' : 'translate-x-2'}`,
+                              closeButton: `transition-opacity duration-200 ${hoveredChipId === item.id ? 'opacity-100' : 'opacity-0'}`,
+                            }}
+                            variant="bordered"
+                            size="lg"
+                            onClick={() => searchMovie(item.content)}
+                            onClose={() => {
+                              if (hoveredChipId === item.id) {
+                                removeSearchHistoryItem(item.id)
+                              }
+                            }}
+                          >
+                            {item.content}
+                          </Chip>
                         </motion.div>
-                      </PopoverTrigger>
-                      <PopoverContent>
-                        <div className="px-1 py-2">
-                          <p>确定要清除全部搜索记录吗？</p>
-                          <div className="mt-[.6rem] flex justify-end gap-[.5rem]">
-                            <Button
-                              className="h-[1.5rem] w-[3rem] min-w-[3rem] text-[.7rem] font-bold"
-                              radius="sm"
-                              variant="shadow"
-                              onPress={() => setIsSearchHistoryDeleteOpen(false)}
-                            >
-                              取消
-                            </Button>
-                            <Button
-                              className="h-[1.5rem] w-[3rem] min-w-[3rem] text-[.7rem] font-bold"
-                              variant="shadow"
-                              color="danger"
-                              radius="sm"
-                              onPress={clearSearchHistory}
-                            >
-                              确定
-                            </Button>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                  <div className="flex justify-end">
+                    <div className="w-fit">
+                      <Popover
+                        placement={isBrowser ? 'top-end' : 'bottom-start'}
+                        isOpen={isSearchHistoryDeleteOpen}
+                        onOpenChange={setIsSearchHistoryDeleteOpen}
+                        isKeyboardDismissDisabled
+                        crossOffset={isBrowser ? -20 : -5}
+                        classNames={{
+                          base: 'bg-transparent',
+                          content: 'bg-white/20 shadow-lg shadow-gray-500/10 backdrop-blur-xl',
+                        }}
+                      >
+                        <PopoverTrigger>
+                          <motion.div
+                            initial={{ color: '#cccccc' }}
+                            whileHover={{ color: '#999999' }}
+                            transition={{ duration: 0.4 }}
+                            className="flex justify-end gap-2 pt-[1.5rem] pr-[1.8rem] hover:cursor-pointer"
+                          >
+                            <CloseIcon size={20} />
+                            <p className="text-sm">清除全部</p>
+                          </motion.div>
+                        </PopoverTrigger>
+                        <PopoverContent>
+                          <div className="px-1 py-2">
+                            <p>确定要清除全部搜索记录吗？</p>
+                            <div className="mt-[.6rem] flex justify-end gap-[.5rem]">
+                              <Button
+                                className="h-[1.5rem] w-[3rem] min-w-[3rem] text-[.7rem] font-bold"
+                                radius="sm"
+                                variant="shadow"
+                                onPress={() => setIsSearchHistoryDeleteOpen(false)}
+                              >
+                                取消
+                              </Button>
+                              <Button
+                                className="h-[1.5rem] w-[3rem] min-w-[3rem] text-[.7rem] font-bold"
+                                variant="shadow"
+                                color="danger"
+                                radius="sm"
+                                onPress={clearSearchHistory}
+                              >
+                                确定
+                              </Button>
+                            </div>
                           </div>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </motion.div>
+              </motion.div>
+            )
+          ) : (
+            /* 豆瓣推荐 */
+            <DoubanRecommend active={activeTab === 'recommend'} />
           )}
         </div>
         {import.meta.env.VITE_DISABLE_ANALYTICS !== 'true' && (
