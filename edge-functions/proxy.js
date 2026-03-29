@@ -66,10 +66,16 @@ export default async function onRequest(context) {
   }
 
   try {
+    // 使用 AbortController 实现超时
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 15000)
+
     const response = await fetch(decodedUrl, {
       headers,
-      signal: AbortSignal.timeout(15000),
+      signal: controller.signal,
     })
+
+    clearTimeout(timeoutId)
 
     const responseHeaders = new Headers()
     responseHeaders.set('Access-Control-Allow-Origin', '*')
