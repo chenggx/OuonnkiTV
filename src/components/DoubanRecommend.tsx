@@ -41,13 +41,16 @@ export default function DoubanRecommend({ active }: DoubanRecommendProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
+      className="relative w-full"
+      style={{ aspectRatio: '2/3' }}
     >
       <Card
         isPressable
         isFooterBlurred
         onPress={() => handleCardClick(subject)}
-        className="flex h-[27vh] w-full cursor-pointer items-center border-none transition-transform hover:scale-103 lg:h-[35vh]"
+        className="h-full w-full cursor-pointer border-none transition-transform hover:scale-103"
         radius="lg"
+        isDisabled={loading}
       >
         <CardHeader className="absolute top-1 z-10 flex-col items-start p-3">
           <div className="rounded-large bg-black/20 px-2 py-1 backdrop-blur">
@@ -82,24 +85,25 @@ export default function DoubanRecommend({ active }: DoubanRecommendProps) {
 
   // 加载骨架屏
   const LoadingSkeleton = () => (
-    <div className="grid grid-cols-2 gap-[4vw] sm:grid-cols-3 md:gap-[2vw] xl:grid-cols-4">
+    <div className="grid w-full grid-cols-2 gap-[4vw] sm:grid-cols-3 md:gap-[2vw] xl:grid-cols-4">
       {Array.from({ length: 8 }).map((_, index) => (
-        <Card
-          key={index}
-          isPressable
-          isFooterBlurred
-          className="flex h-[27vh] w-full items-center border-none lg:h-[35vh]"
-          radius="lg"
-        >
-          <div className="absolute inset-0 z-0 flex items-center justify-center bg-default-100">
-            <Spinner size="lg" color="primary" />
-          </div>
-          <CardFooter className="rounded-large shadow-small absolute bottom-[3%] z-10 min-h-[8vh] w-[92%] justify-between overflow-hidden border-1 border-white/20 py-2 backdrop-blur before:rounded-xl before:bg-white/10">
-            <div className="flex flex-grow flex-col gap-1 px-1">
-              <div className="h-4 w-3/4 rounded bg-default-200" />
+        <div key={index} className="relative w-full" style={{ aspectRatio: '2/3' }}>
+          <Card
+            isPressable
+            isFooterBlurred
+            className="h-full w-full items-center border-none"
+            radius="lg"
+          >
+            <div className="absolute inset-0 z-0 flex items-center justify-center bg-default-100">
+              <Spinner size="lg" color="primary" />
             </div>
-          </CardFooter>
-        </Card>
+            <CardFooter className="rounded-large shadow-small absolute bottom-[3%] z-10 min-h-[8vh] w-[92%] justify-between overflow-hidden border-1 border-white/20 py-2 backdrop-blur before:rounded-xl before:bg-white/10">
+              <div className="flex flex-grow flex-col gap-1 px-1">
+                <div className="h-4 w-3/4 rounded bg-default-200" />
+              </div>
+            </CardFooter>
+          </Card>
+        </div>
       ))}
     </div>
   )
@@ -165,12 +169,10 @@ export default function DoubanRecommend({ active }: DoubanRecommendProps) {
       {loading ? (
         <LoadingSkeleton />
       ) : subjects.length > 0 ? (
-        <div className="flex flex-col items-center gap-10">
-          <div className="grid grid-cols-2 gap-[4vw] sm:grid-cols-3 md:gap-[2vw] xl:grid-cols-4">
-            {subjects.map((subject, index) => (
-              <DoubanCard key={`${subject.url}_${index}`} subject={subject} index={index} />
-            ))}
-          </div>
+        <div className="grid w-full grid-cols-2 gap-[4vw] sm:grid-cols-3 md:gap-[2vw] xl:grid-cols-4">
+          {subjects.map((subject, index) => (
+            <DoubanCard key={`${subject.url}_${index}`} subject={subject} index={index} />
+          ))}
         </div>
       ) : (
         <div className="flex items-center justify-center py-20 text-default-400">
