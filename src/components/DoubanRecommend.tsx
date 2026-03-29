@@ -66,11 +66,7 @@ export default function DoubanRecommend({ active }: DoubanRecommendProps) {
             </Chip>
           )}
         </CardHeader>
-        <Image
-          removeWrapper
-          isZoomed
-          isBlurred={loading}
-          loading="lazy"
+        <img
           alt={subject.title}
           className="z-0 h-full w-full object-cover"
           src={subject.cover || 'https://placehold.jp/30/ffffff/000000/300x450.png?text=暂无封面'}

@@ -64,7 +64,8 @@ src/
 ├── hooks/               # 自定义 Hooks
 │   ├── useSearch.ts     # 搜索逻辑
 │   ├── useSearchHistory.ts
-│   └── usePersonalConfig.ts # 配置导入/导出
+│   ├── usePersonalConfig.ts # 配置导入/导出
+│   └── useDoubanRecommend.ts # 豆瓣推荐
 ├── middleware/          # 中间件
 │   └── proxy.dev.ts     # Vite 开发代理
 ├── pages/               # 页面组件
@@ -110,7 +111,25 @@ src/
 
 ## 核心功能实现
 
-### 1. 搜索流程
+### 1. 豆瓣推荐
+```
+用户点击推荐 → useDoubanRecommend.fetchRecommendations()
+  ↓
+选择类型（电影/电视剧） + 标签筛选（热门/最新/经典）
+  ↓
+通过代理请求豆瓣 API
+  ↓
+渲染推荐结果（图片使用代理绕过防盗链）
+```
+
+**关键特性**:
+- **类型切换**: 支持电影、电视剧两种类型
+- **标签筛选**: 热门、最新、经典等标签
+- **图片代理**: 绕过豆瓣图片防盗链，使用 `doubanio.com` 匹配所有豆瓣图片域名
+- **代理增强**: 正确处理二进制图片数据，添加缓存响应头
+- **注意**: 豆瓣图片使用 HeroUI Image 组件可能存在 `data-loaded` 属性问题，当前使用原生 `<img>` 标签
+
+### 2. 搜索流程
 ```
 用户输入 → useSearch.searchMovie() → searchStore.addSearchHistoryItem()
   ↓
@@ -130,7 +149,7 @@ searchStore.updateCachedResults() → 增量更新缓存
 - **增量渲染**: `onNewResults` 回调实时更新 UI
 - **AbortController**: 支持搜索中断
 
-### 2. 视频源管理
+### 3. 视频源管理
 ```typescript
 interface VideoApi {
   id: string
@@ -150,7 +169,7 @@ interface VideoApi {
 3. 支持 URL 导入 (自动 fetch 并解析)
 4. 存储在 `apiStore` (Zustand + localStorage)
 
-### 3. 配置管理
+### 4. 配置管理
 **导入/导出** (`usePersonalConfig.ts`):
 - **导出**: 生成 JSON，包含 settings + videoSources
 - **导入**: 支持文件/文本/URL 三种方式
@@ -161,13 +180,13 @@ interface VideoApi {
 VITE_INITIAL_CONFIG > VITE_INITIAL_VIDEO_SOURCES > 默认值
 ```
 
-### 4. 播放器集成
+### 5. 播放器集成
 - **Artplayer**: 多功能播放器
 - **HLS.js**: HLS 流媒体支持
 - **广告过滤**: 基于 URL 模式过滤
 - **观看历史**: 自动记录播放进度
 
-### 5. 状态持久化
+### 6. 状态持久化
 所有 Zustand store 均使用 `persist` 中间件：
 
 | Store | 存储键名 | 持久化内容 |
@@ -279,10 +298,12 @@ pnpm dev
 | `src/store/apiStore.ts` | 视频源状态管理，支持初始化和导入 |
 | `src/store/searchStore.ts` | 搜索状态 + 缓存 + 历史记录 |
 | `src/config/initialConfig.ts` | 环境变量解析逻辑 |
-| `src/utils/proxy.ts` | 统一代理逻辑 (复用在所有环境) |
-| `api/proxy.ts` | Vercel Serverless 代理 |
-| `proxy-server.js` | Docker Node.js 代理服务 |
+| `src/utils/proxy.ts` | 统一代理逻辑 (复用在所有环境)，含图片代理 |
+| `api/proxy.ts` | Vercel Serverless 代理，含图片代理 |
+| `proxy-server.js` | Docker Node.js 代理服务，含图片代理 |
 | `src/middleware/proxy.dev.ts` | Vite 开发环境代理 |
+| `src/components/DoubanRecommend.tsx` | 豆瓣推荐页面组件 |
+| `src/hooks/useDoubanRecommend.ts` | 豆瓣推荐 Hook |
 
 ## 注意事项
 

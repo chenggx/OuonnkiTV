@@ -18,7 +18,7 @@ const getProxyUrl = (targetUrl: string) => {
 }
 
 // 豆瓣图片代理域名
-const DOUBAN_IMG_DOMAINS = ['img1.doubanio.com', 'img2.doubanio.com', 'img3.doubanio.com']
+const DOUBAN_IMG_DOMAINS = ['doubanio.com']
 
 // 判断是否为豆瓣图片
 const isDoubanImage = (url: string) => {
