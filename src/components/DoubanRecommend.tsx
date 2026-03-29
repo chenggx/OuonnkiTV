@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Card, CardFooter, CardHeader, Chip, Image, Spinner, Button } from '@heroui/react'
+import { Card, CardFooter, CardHeader, Chip, Spinner, Button } from '@heroui/react'
 import { motion } from 'framer-motion'
 import { useDoubanRecommend, type DoubanSubject } from '@/hooks/useDoubanRecommend'
 import { useSearch } from '@/hooks'
