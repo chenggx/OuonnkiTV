@@ -11,40 +11,39 @@ import { cn } from '@/utils'
 import AboutProject from '@/components/settings/AboutProject'
 import { Button } from '@/components/ui/button'
 import { useNavigate } from 'react-router'
+import { PageBackground } from '@/components/ui/PageBackground'
 
 export default function SettingsPage() {
-  // 路由相关
   const navigate = useNavigate()
-  // SideBar 相关
   const SideBarModules: SettingModuleList = [
     {
       id: 'video_source',
-      name: '视频源管理',
-      icon: <ListVideo />,
+      name: '视频源',
+      icon: <ListVideo size={20} />,
       component: <VideoSource />,
     },
     {
       id: 'network_settings',
-      name: '网络设置',
-      icon: <Globe />,
+      name: '网络',
+      icon: <Globe size={20} />,
       component: <NetworkSettings />,
     },
     {
       id: 'search_settings',
-      name: '搜索设置',
-      icon: <Search />,
+      name: '搜索',
+      icon: <Search size={20} />,
       component: <SearchSettings />,
     },
     {
       id: 'playback_settings',
-      name: '播放设置',
-      icon: <Play />,
+      name: '播放',
+      icon: <Play size={20} />,
       component: <PlaybackSettings />,
     },
     {
       id: 'about_project',
       name: '关于',
-      icon: <Info />,
+      icon: <Info size={20} />,
       component: <AboutProject />,
     },
   ]
@@ -53,47 +52,71 @@ export default function SettingsPage() {
   const currentModule = SideBarModules.find(module => module.id === activeId) || SideBarModules[0]
 
   return (
-    <div className="min-h-[90vh] pt-3 pb-20">
-      <div className="flex items-center justify-between px-1 pr-2 md:px-0">
-        <Button
-          variant="ghost"
-          className="hover:bg-white/20 hover:backdrop-blur-xl"
-          onClick={() => navigate('/')}
-        >
-          <ArrowLeft /> 返回
-        </Button>
-        <div className="flex items-center gap-0 md:hidden">
+    <div className="relative min-h-screen">
+      <PageBackground />
+
+      <div className="relative z-10 p-4 pb-20 md:p-6">
+        {/* Top navigation bar */}
+        <div className="mb-6 flex items-center justify-between">
           <Button
             variant="ghost"
-            className="hover:bg-white/20 hover:backdrop-blur-xl"
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            onClick={() => navigate('/')}
+            className="border border-[#00FF41]/30 bg-[#001100]/50 text-[#00FF41]/70 hover:bg-[#00FF41]/10 hover:text-[#00FF41] hover:border-[#00FF41]/50 font-mono text-xs uppercase tracking-wider"
           >
-            <span className="text-sm font-medium text-gray-700">{currentModule.name}</span>
-            <Menu />
+            <ArrowLeft size={16} className="mr-2" />
+            返回
           </Button>
-        </div>
-      </div>
 
-      <div className="mt-2 flex flex-col gap-4 md:flex-row md:gap-8">
-        <div
-          className={cn(
-            'transition-all duration-400 ease-in md:block md:min-h-[80vh] md:w-70 md:opacity-100',
-            isSidebarOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 md:max-h-none',
-          )}
-        >
-          <div className="px-5 md:px-0">
-            <SideBar
-              className="w-full border-r-0 border-gray-300/70 pb-2 md:w-full md:border-r md:pt-4 md:pr-8 md:pb-15 md:pl-2"
-              activeId={activeId}
-              modules={SideBarModules}
-              onSelect={id => {
-                setActiveId(id)
-                setIsSidebarOpen(false)
-              }}
-            />
+          {/* Mobile menu button */}
+          <div className="flex items-center gap-2 md:hidden">
+            <Button
+              variant="ghost"
+              className="border border-[#00FF41]/30 bg-[#001100]/50 text-[#00FF41]/70 hover:bg-[#00FF41]/10 hover:text-[#00FF41] hover:border-[#00FF41]/50 font-mono text-xs uppercase tracking-wider"
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            >
+              <Menu size={16} className="mr-2" />
+              <span className="text-sm font-medium">{currentModule.name}</span>
+            </Button>
           </div>
         </div>
-        <ModuleContent module={currentModule} />
+
+        {/* Main content */}
+        <div className="flex flex-col gap-6 md:flex-row">
+          {/* Sidebar */}
+          <div
+            className={cn(
+              'transition-all duration-300 md:block md:min-h-[70vh] md:w-64 md:opacity-100',
+              isSidebarOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 md:max-h-none',
+            )}
+          >
+            <div
+              className="rounded border border-[#00FF41]/20 bg-[#0D0D0D]/95 p-4 backdrop-blur-xl"
+              style={{
+                boxShadow: '0 0 30px rgba(0, 255, 65, 0.05), inset 0 0 30px rgba(0, 255, 65, 0.02)',
+              }}
+            >
+              <SideBar
+                className="w-full"
+                activeId={activeId}
+                modules={SideBarModules}
+                onSelect={id => {
+                  setActiveId(id)
+                  setIsSidebarOpen(false)
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Content area */}
+          <div
+            className="flex-1 rounded border border-[#00FF41]/20 bg-[#0D0D0D]/95 p-6 backdrop-blur-xl"
+            style={{
+              boxShadow: '0 0 30px rgba(0, 255, 65, 0.05), inset 0 0 30px rgba(0, 255, 65, 0.02)',
+            }}
+          >
+            <ModuleContent module={currentModule} />
+          </div>
+        </div>
       </div>
     </div>
   )

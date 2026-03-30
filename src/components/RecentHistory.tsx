@@ -18,12 +18,12 @@ dayjs.extend(relativeTime)
 dayjs.locale('zh-cn')
 dayjs.extend(duration)
 
-// 格式化集数显示
+// Format episode display
 const formatEpisodeDisplay = (item: ViewingHistoryItem): string => {
   if (item.episodeName) {
     return item.episodeName
   }
-  return `第${item.episodeIndex + 1}集`
+  return `EP_${item.episodeIndex + 1}`
 }
 
 const HistoryList = ({
@@ -43,107 +43,119 @@ const HistoryList = ({
     })
     return Array.from(historyMap.values())
   }, [viewingHistory])
+
   if (filteredHistory.length === 0) {
     return (
-      <div className="mt-5 flex flex-col items-center justify-center gap-2">
-        <NoItemIcon size={128} />
-        <p className="mt-2 text-sm text-gray-500">暂无观看记录</p>
+      <div className="mt-5 flex flex-col items-center justify-center gap-4">
+        <div
+          className="opacity-30"
+          style={{ filter: 'drop-shadow(0 0 10px rgba(0, 255, 65, 0.3))' }}
+        >
+          <NoItemIcon size={80} />
+        </div>
+        <p className="mt-2 text-sm text-[#00FF41]/50 font-mono uppercase tracking-wider">
+          {'>'} NO_HISTORY_FOUND...
+        </p>
       </div>
     )
   }
+
   return (
     <>
       <ScrollShadow hideScrollBar className="max-h-[50vh] overflow-y-auto bg-transparent p-2">
         {filteredHistory.map((item, index) => (
-          <Card
-            className="@container mb-[.6rem] h-[30vw] w-full bg-white/30 shadow-md/5 transition-all duration-500 hover:scale-101 hover:shadow-lg md:h-[8rem] md:w-[25rem]"
+          <motion.div
             key={index}
-            isPressable
-            shadow="sm"
-            onPress={() => console.log('item pressed')}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: index * 0.05 }}
           >
-            <NavLink
-              className="w-full"
-              to={`/video/${item.sourceCode}/${item.vodId}/${item.episodeIndex}`}
+            <Card
+              className="mb-[.6rem] w-full transition-all duration-300 hover:scale-[1.01]"
+              isPressable
+              shadow="sm"
+              onPress={() => console.log('item pressed')}
+              classNames={{
+                base: 'bg-[#0D0D0D] border border-[#00FF41]/20 hover:border-[#00FF41]/40 transition-all duration-300',
+              }}
             >
-              <div className="flex h-[30vw] w-full md:h-[8rem]">
-                <div className="relative shrink-0">
-                  <Image
-                    alt={item.title}
-                    radius="lg"
-                    shadow="sm"
-                    loading="lazy"
-                    isZoomed
-                    isBlurred
-                    classNames={{
-                      zoomedWrapper: 'h-full aspect-square',
-                      wrapper: 'h-full aspect-square',
-                      img: 'h-full w-full object-cover',
-                    }}
-                    src={item.imageUrl}
-                  />
-                  <Progress
-                    aria-label="Progress"
-                    value={(item.playbackPosition / item.duration) * 100}
-                    color="primary"
-                    className="absolute bottom-0 z-10 w-full"
-                    classNames={{
-                      base: 'h-[1.5cqw]',
-                    }}
-                  />
-                </div>
-                <div className="group flex h-full w-full flex-col items-start justify-between p-[4cqw] md:gap-3 md:p-4">
-                  <div className="flex w-full items-center justify-between gap-[2cqw] md:gap-2">
-                    <Chip
-                      color="primary"
-                      variant="solid"
+              <NavLink
+                className="w-full"
+                to={`/video/${item.sourceCode}/${item.vodId}/${item.episodeIndex}`}
+              >
+                <div className="flex h-[30vw] w-full md:h-[8rem]">
+                  <div className="relative shrink-0">
+                    <Image
+                      alt={item.title}
+                      radius="sm"
+                      shadow="sm"
+                      loading="lazy"
                       classNames={{
-                        base: 'h-[6cqw] px-[3%] md:h-6 md:px-2',
-                        content: 'text-[3cqw] md:text-xs',
+                        wrapper: 'h-full aspect-square',
+                        img: 'h-full w-full object-cover',
                       }}
-                    >
-                      {item.sourceName}
-                    </Chip>
-                    <div className="flex items-center justify-center gap-[.6rem] text-[3.5cqw] text-gray-500 md:text-sm">
-                      <p>{dayjs(item.timestamp).fromNow()}</p>
-                      <motion.div
-                        initial={{ color: '#888888' }}
-                        whileHover={{ color: '#d6204b', backgroundColor: '#f0f0f0' }}
-                        transition={{ duration: 0.4 }}
-                        className="flex h-[1.5rem] w-[1.5rem] items-center justify-center rounded-full"
-                        onClick={e => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          removeViewingHistory(item)
+                      src={item.imageUrl}
+                      className="border border-[#00FF41]/10"
+                    />
+                    <Progress
+                      aria-label="Progress"
+                      value={(item.playbackPosition / item.duration) * 100}
+                      className="absolute bottom-0 z-10 w-full"
+                      classNames={{
+                        base: 'h-[1.5cqw]',
+                        indicator: 'bg-[#00FF41]',
+                      }}
+                    />
+                  </div>
+                  <div className="group flex h-full w-full flex-col items-start justify-between p-[4cqw] md:gap-3 md:p-4">
+                    <div className="flex w-full items-center justify-between gap-[2cqw] md:gap-2">
+                      <Chip
+                        classNames={{
+                          base: 'h-[6cqw] px-[3%] md:h-6 md:px-2 border border-[#00FF41]/30 bg-[#001100]',
+                          content: 'text-[3cqw] md:text-xs text-[#00FF41] font-mono uppercase',
                         }}
                       >
-                        <TrashIcon size={16} />
-                      </motion.div>
+                        {item.sourceName}
+                      </Chip>
+                      <div className="flex items-center justify-center gap-[.6rem] text-[3.5cqw] text-[#00FF41]/40 md:text-xs">
+                        <p className="font-mono">{dayjs(item.timestamp).fromNow()}</p>
+                        <motion.div
+                          initial={{ color: '#00FF41', backgroundColor: 'transparent' }}
+                          whileHover={{ color: '#FF0040', backgroundColor: 'rgba(255, 0, 64, 0.1)' }}
+                          transition={{ duration: 0.4 }}
+                          className="flex h-[1.5rem] w-[1.5rem] items-center justify-center rounded"
+                          onClick={e => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            removeViewingHistory(item)
+                          }}
+                        >
+                          <TrashIcon size={14} />
+                        </motion.div>
+                      </div>
+                    </div>
+                    <div
+                      className="line-clamp-1 text-[4.5cqw] font-bold text-[#00FF41] transition-colors duration-200 group-hover:underline md:text-base uppercase tracking-wider font-['Orbitron']"
+                      style={{ textShadow: '0 0 10px rgba(0, 255, 65, 0.5)' }}
+                    >
+                      {item.title}
+                    </div>
+                    <div className="flex w-full items-center justify-between gap-[2cqw] text-[3cqw] md:gap-2 md:text-xs font-mono">
+                      <div className="text-[#00FF41]/50">{formatEpisodeDisplay(item)}</div>
+                      <div className="text-[#00FF41]/50">
+                        {((item.playbackPosition / item.duration) * 100).toFixed(0)}% WATCHED
+                      </div>
                     </div>
                   </div>
-                  <div className="line-clamp-1 text-[4.5cqw] font-bold text-gray-700 transition-colors duration-200 group-hover:text-indigo-400 group-hover:underline md:text-lg">
-                    {item.title}
-                  </div>
-                  <div className="flex w-full items-center justify-between gap-[2cqw] text-[3cqw] md:gap-2 md:text-xs">
-                    <div className="text-gray-500">{formatEpisodeDisplay(item)}</div>
-                    <div className="text-gray-500">
-                      已看 {((item.playbackPosition / item.duration) * 100).toFixed(0)}%{' '}
-                    </div>
-                  </div>
-                  {/* <Progress
-                    aria-label="Progress"
-                    label={`${dayjs.duration(item.playbackPosition, 'seconds').format('HH:mm:ss')} / ${dayjs.duration(item.duration, 'seconds').format('HH:mm:ss')}`}
-                    value={(item.playbackPosition / item.duration) * 100}
-                    color="primary"
-                    size="sm"
-                  /> */}
                 </div>
-              </div>
-            </NavLink>
-          </Card>
+              </NavLink>
+            </Card>
+          </motion.div>
         ))}
         <div className="mt-5 flex items-center justify-center">
-          <p className="text-sm text-gray-500">没有更多了</p>
+          <p className="text-sm text-[#00FF41]/30 font-mono uppercase tracking-wider">
+            {'>'} END_OF_HISTORY
+          </p>
         </div>
       </ScrollShadow>
     </>
@@ -157,29 +169,33 @@ export default function RecentHistory() {
     <>
       <Tooltip
         isOpen={isBrowser ? undefined : false}
-        // isOpen={true}
         classNames={{
           base: 'bg-transparent',
           content:
-            'flex justify-start min-h-[40vh] max-h-[60vh] p-2 bg-white/50 shadow-xl/30 shadow-gray-500/30 backdrop-blur-lg',
+            'flex justify-start min-h-[40vh] max-h-[60vh] p-2 border border-[#00FF41]/20 bg-[#0D0D0D]/95 backdrop-blur-xl shadow-[0_0_30px_rgba(0,255,65,0.1)]',
         }}
         content={
           <>
             <div className="h-full">
               <div className="mt-2 mb-2 flex w-full items-end justify-between">
                 <div className="flex-1"></div>
-                <div className="text-center text-lg font-bold text-gray-800">观看记录</div>
+                <div
+                  className="text-center text-lg font-bold text-[#00FF41] font-['Orbitron'] uppercase tracking-wider"
+                  style={{ textShadow: '0 0 15px rgba(0, 255, 65, 0.5)' }}
+                >
+                  {'>>'} HISTORY
+                </div>
                 <div className="flex flex-1 items-center justify-end">
                   {viewingHistory.length > 0 && (
                     <motion.div
-                      initial={{ color: '#aaaaaa' }}
-                      whileHover={{ color: '#666666' }}
+                      initial={{ color: '#00FF41' }}
+                      whileHover={{ color: '#FF0040' }}
                       transition={{ duration: 0.4 }}
-                      className="flex items-center justify-center gap-1 pr-3 hover:cursor-pointer"
+                      className="flex items-center justify-center gap-1 pr-3 hover:cursor-pointer font-mono text-xs uppercase tracking-wider"
                       onClick={clearViewingHistory}
                     >
                       <CloseIcon size={16} />
-                      <p className="text-sm">清除历史</p>
+                      <p>CLEAR</p>
                     </motion.div>
                   )}
                 </div>
@@ -209,29 +225,37 @@ export default function RecentHistory() {
         createPortal(
           <div
             className={clsx(
-              'fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/50 opacity-0 shadow-xl/30 shadow-gray-500/30 backdrop-blur-xl transition-opacity duration-2000',
+              'fixed inset-0 z-50 flex flex-col items-center justify-center border border-[#00FF41]/20 bg-black/90 backdrop-blur-xl transition-opacity duration-2000',
               isOpen && 'opacity-100',
             )}
+            style={{
+              boxShadow: 'inset 0 0 100px rgba(0, 255, 65, 0.05)',
+            }}
             onClick={() => setIsOpen(false)}
           >
             <div className="flex h-[90vh] w-[90vw] flex-col items-center justify-start">
               <div className="mt-[5vh] mb-2 flex h-fit w-full items-end justify-between px-4">
                 <div className="flex-1"></div>
-                <div className="text-center text-2xl font-bold text-gray-800">观看记录</div>
+                <div
+                  className="text-center text-2xl font-bold text-[#00FF41] font-['Orbitron'] uppercase tracking-wider"
+                  style={{ textShadow: '0 0 20px rgba(0, 255, 65, 0.5)' }}
+                >
+                  {'>>'} HISTORY
+                </div>
                 <div className="flex flex-1 items-center justify-end">
                   {viewingHistory.length > 0 && (
                     <motion.div
-                      initial={{ color: '#aaaaaa' }}
-                      whileHover={{ color: '#666666' }}
+                      initial={{ color: '#00FF41' }}
+                      whileHover={{ color: '#FF0040' }}
                       transition={{ duration: 0.4 }}
-                      className="flex items-center justify-center gap-1"
+                      className="flex items-center justify-center gap-1 font-mono text-sm uppercase tracking-wider"
                       onClick={e => {
                         e.stopPropagation()
                         clearViewingHistory()
                       }}
                     >
                       <CloseIcon size={20} />
-                      <p className="text-base">清除历史</p>
+                      <p>CLEAR</p>
                     </motion.div>
                   )}
                 </div>

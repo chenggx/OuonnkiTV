@@ -46,7 +46,6 @@ import { type VideoApi } from '@/types'
 import { useApiStore } from '@/store/apiStore'
 import { useState, useEffect } from 'react'
 
-// 表单-字符串输入通用组件
 interface InputFormItemProps<T extends FieldValues> {
   label: string
   description: string
@@ -72,12 +71,12 @@ function InputFormItem<T extends FieldValues>({
 }: InputFormItemProps<T>) {
   return (
     <Field>
-      <div className="flex flex-col items-start gap-1">
-        <FieldLabel className="text-lg" htmlFor={id}>
+      <div className="flex flex-col items-start gap-1.5">
+        <FieldLabel className="text-sm font-medium text-white/80" htmlFor={id}>
           {label}
         </FieldLabel>
-        <FieldDescription className="flex items-center gap-1">
-          <Info size={16} className="hidden md:block" />
+        <FieldDescription className="flex items-center gap-1.5 text-xs text-white/40">
+          <Info size={14} className="hidden md:block" />
           {description}
         </FieldDescription>
       </div>
@@ -90,16 +89,17 @@ function InputFormItem<T extends FieldValues>({
           {...register(id)}
           aria-invalid={errors[id] ? true : false}
           type={type || 'text'}
+          className="border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:border-amber-500/50"
         />
       )}
       <FieldError
         errors={errors[id] ? [{ message: (errors[id] as RHFFieldError)?.message }] : []}
+        className="text-xs text-red-400 mt-1"
       />
     </Field>
   )
 }
 
-// 表单-视频源输入组件
 function VideoSourceFormItem<T extends FieldValues>({
   register,
   errors,
@@ -126,23 +126,27 @@ function VideoSourceFormItem<T extends FieldValues>({
       errors={errors}
       asChild
     >
-      <div className="flex items-center justify-between gap-5">
+      <div className="flex items-center justify-between gap-4">
         <Input
           placeholder="例如：source1"
           {...register('id' as Path<T>)}
           aria-invalid={errors['id'] ? true : false}
           disabled={isRandomId}
+          className="border-white/10 bg-white/5 text-white placeholder:text-white/30 focus:border-amber-500/50"
         />
         <div className="flex w-40 items-center justify-end gap-2">
-          <Checkbox checked={isRandomId} onCheckedChange={handleRandomIdChange} />
-          <Label>使用随机ID</Label>
+          <Checkbox
+            checked={isRandomId}
+            onCheckedChange={handleRandomIdChange}
+            className="border-white/20 bg-white/5"
+          />
+          <Label className="text-sm text-white/60">随机ID</Label>
         </div>
       </div>
     </InputFormItem>
   )
 }
 
-// 视频源表单
 export default function VideoSourceForm({ sourceInfo }: { sourceInfo: VideoApi }) {
   const { removeVideoAPI, addAndUpdateVideoAPI, videoAPIs } = useApiStore()
   const formSchema = z.object({
@@ -159,9 +163,7 @@ export default function VideoSourceForm({ sourceInfo }: { sourceInfo: VideoApi }
     updatedAt: z.coerce.date().default(() => new Date()),
     isEnabled: z.boolean().default(true),
   })
-  // 类型推导
   type FormSchema = z.infer<typeof formSchema>
-  // 表单实例
   const {
     register,
     handleSubmit,
@@ -183,19 +185,16 @@ export default function VideoSourceForm({ sourceInfo }: { sourceInfo: VideoApi }
     },
   })
 
-  // 监听 props 变化，更新表单数据
   useEffect(() => {
     reset(sourceInfo)
   }, [sourceInfo, reset])
-  // 表单提交
+
   const onSubmit = (data: FormSchema) => {
-    // 如果修改了 ID，且新 ID 已存在
     if (data.id !== sourceInfo.id) {
       if (videoAPIs.some(api => api.id === data.id)) {
         toast.error('保存失败，视频源ID已存在')
         return
       }
-      // 如果修改了 ID，先删除旧的
       removeVideoAPI(sourceInfo.id)
     }
 
@@ -203,27 +202,28 @@ export default function VideoSourceForm({ sourceInfo }: { sourceInfo: VideoApi }
     toast.success('保存成功')
   }
 
-  // 表单验证错误处理
   const onInvalid = (errors: FieldErrors<FormSchema>) => {
     console.error('Form validation errors:', errors)
     toast.error('保存失败，请检查表单填写是否正确')
   }
 
-  // 高级设置
   const [isOpen, setIsOpen] = useState(false)
-  // 删除视频源
   const handleDelete = (id: string) => {
     removeVideoAPI(id)
     toast.success('删除成功')
   }
+
   return (
     <form onSubmit={handleSubmit(onSubmit, onInvalid)}>
-      <div className="flex flex-col gap-4 pt-4">
-        {/* 基本设置 */}
-        <FieldSet>
-          <FieldLegend className="text-xl! font-semibold">基本信息</FieldLegend>
-          <FieldDescription>视频源的基本信息</FieldDescription>
-          <FieldGroup>
+      <div className="flex flex-col gap-5 pt-2">
+        <FieldSet className="space-y-4">
+          <div>
+            <FieldLegend className="text-base font-semibold text-white">基本信息</FieldLegend>
+            <FieldDescription className="text-xs text-white/40 mt-1">
+              视频源的基本信息
+            </FieldDescription>
+          </div>
+          <FieldGroup className="space-y-4">
             <VideoSourceFormItem register={register} errors={errors} setValue={setValue} />
             <InputFormItem
               label="视频源名称"
@@ -244,17 +244,22 @@ export default function VideoSourceForm({ sourceInfo }: { sourceInfo: VideoApi }
             />
             <InputFormItem
               label="视频源详情 URL"
-              description="用于视频源解析的详情 URL，留空则使用视频源 URL"
+              description="留空则使用视频源 URL"
               placeholder="例如：https://example.com"
               id="detailUrl"
               register={register}
               errors={errors}
               type="url"
             />
-            <Field orientation="horizontal">
-              <FieldLabel className="text-lg" htmlFor="isEnabled">
-                是否启用视频源
-              </FieldLabel>
+            <Field orientation="horizontal" className="flex items-center justify-between">
+              <div className="flex flex-col items-start gap-1">
+                <FieldLabel className="text-sm font-medium text-white/80" htmlFor="isEnabled">
+                  是否启用
+                </FieldLabel>
+                <FieldDescription className="text-xs text-white/40">
+                  关闭后将不会搜索该视频源
+                </FieldDescription>
+              </div>
               <Controller
                 control={control}
                 name="isEnabled"
@@ -265,29 +270,33 @@ export default function VideoSourceForm({ sourceInfo }: { sourceInfo: VideoApi }
             </Field>
           </FieldGroup>
         </FieldSet>
-        <FieldSeparator />
-        {/* 高级设置 */}
-        <FieldSet>
+
+        <FieldSeparator className="bg-white/10" />
+
+        <FieldSet className="space-y-4">
           <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-            <div className="flex items-center justify-between pb-6">
+            <div className="flex items-center justify-between">
               <div>
-                <FieldLegend className="text-xl! font-semibold">高级设置</FieldLegend>
-                <FieldDescription>
-                  视频源的高级设置，包括超时时间、重试次数等（可选）
+                <FieldLegend className="text-base font-semibold text-white">高级设置</FieldLegend>
+                <FieldDescription className="text-xs text-white/40 mt-1">
+                  超时时间、重试次数等
                 </FieldDescription>
               </div>
               <CollapsibleTrigger asChild>
-                <Button variant="ghost" size="icon" className="size-8">
-                  <ChevronsUpDown />
-                  <span className="sr-only">Toggle</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-white/60 hover:bg-white/10 hover:text-white"
+                >
+                  <ChevronsUpDown className="h-4 w-4" />
                 </Button>
               </CollapsibleTrigger>
             </div>
-            <CollapsibleContent className="flex flex-col gap-2">
-              <FieldGroup>
+            <CollapsibleContent className="flex flex-col gap-4 pt-4">
+              <FieldGroup className="space-y-4">
                 <InputFormItem
                   label="超时时间"
-                  description="视频源解析的超时时间，单位为毫秒"
+                  description="单位为毫秒"
                   placeholder="例如：3000"
                   id="timeout"
                   register={register}
@@ -296,7 +305,7 @@ export default function VideoSourceForm({ sourceInfo }: { sourceInfo: VideoApi }
                 />
                 <InputFormItem
                   label="重试次数"
-                  description="视频源解析的重试次数"
+                  description="解析失败时的重试次数"
                   placeholder="例如：3"
                   id="retry"
                   register={register}
@@ -307,31 +316,29 @@ export default function VideoSourceForm({ sourceInfo }: { sourceInfo: VideoApi }
             </CollapsibleContent>
           </Collapsible>
         </FieldSet>
-        <div className="flex items-end justify-between">
+
+        <div className="flex items-end justify-between pt-4 border-t border-white/10">
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <span className="text-red-600 hover:cursor-pointer hover:text-red-500 hover:underline">
+              <span className="cursor-pointer text-sm text-red-400/70 hover:text-red-400 hover:underline">
                 删除本视频源
               </span>
             </AlertDialogTrigger>
-            <AlertDialogContent
-              className="h-fit bg-white/20 backdrop-blur-md"
-              overlayClassName="bg-white/40 backdrop-blur-xs"
-            >
+            <AlertDialogContent className="bg-zinc-900/95 border border-white/10 backdrop-blur-xl">
               <AlertDialogHeader>
-                <AlertDialogTitle>确定要删除本视频源吗？</AlertDialogTitle>
-                <AlertDialogDescription>
-                  此操作无法撤销，确认后将<span className="text-red-600">永久删除</span>
-                  本视频源，请谨慎操作。
+                <AlertDialogTitle className="text-white">确定要删除本视频源吗？</AlertDialogTitle>
+                <AlertDialogDescription className="text-white/60">
+                  此操作无法撤销，确认后将<span className="text-red-400">永久删除</span>
+                  本视频源。
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="border-0 bg-transparent shadow-none outline-0 hover:bg-transparent hover:text-gray-600">
+                <AlertDialogCancel className="border border-white/10 bg-white/5 text-white/70 hover:bg-white/10 hover:text-white">
                   取消
                 </AlertDialogCancel>
                 <AlertDialogAction
                   onClick={() => handleDelete(sourceInfo.id)}
-                  className="bg-red-600 hover:bg-red-500"
+                  className="bg-red-600 hover:bg-red-500 text-white"
                 >
                   确定删除
                 </AlertDialogAction>
@@ -339,7 +346,10 @@ export default function VideoSourceForm({ sourceInfo }: { sourceInfo: VideoApi }
             </AlertDialogContent>
           </AlertDialog>
 
-          <Button variant="default" type="submit" className="shadow-2xl">
+          <Button
+            type="submit"
+            className="bg-gradient-to-r from-amber-500 to-orange-500 text-black font-semibold hover:from-amber-400 hover:to-orange-400"
+          >
             保存
           </Button>
         </div>

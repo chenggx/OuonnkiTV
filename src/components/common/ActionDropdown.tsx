@@ -32,11 +32,19 @@ export default function ActionDropdown({ label, items, align = 'end' }: ActionDr
     if (item.type === 'sub' && item.children) {
       return (
         <DropdownMenuSub key={index}>
-          <DropdownMenuSubTrigger className="cursor-pointer px-2">
+          <DropdownMenuSubTrigger
+            className="cursor-pointer px-2 font-mono text-xs uppercase tracking-wider text-[#00FF41]/70 hover:text-[#00FF41] hover:bg-[#00FF41]/10"
+            style={{ borderRadius: '4px' }}
+          >
             {item.label}
           </DropdownMenuSubTrigger>
           <DropdownMenuPortal>
-            <DropdownMenuSubContent className="bg-white/10 backdrop-blur-lg">
+            <DropdownMenuSubContent
+              className="border border-[#00FF41]/20 bg-[#0D0D0D]/95 backdrop-blur-xl"
+              style={{
+                boxShadow: '0 0 30px rgba(0, 255, 65, 0.1)',
+              }}
+            >
               {item.children.map((child, childIndex) => renderItem(child, childIndex))}
             </DropdownMenuSubContent>
           </DropdownMenuPortal>
@@ -47,8 +55,9 @@ export default function ActionDropdown({ label, items, align = 'end' }: ActionDr
     return (
       <DropdownMenuItem
         key={index}
-        className={`px-2 hover:cursor-pointer ${item.className || ''}`}
+        className={`px-2 hover:cursor-pointer font-mono text-xs uppercase tracking-wider text-[#00FF41]/70 hover:text-[#00FF41] hover:bg-[#00FF41]/10 ${item.className || ''}`}
         onClick={item.onClick}
+        style={{ borderRadius: '4px' }}
       >
         {item.label}
       </DropdownMenuItem>
@@ -58,11 +67,20 @@ export default function ActionDropdown({ label, items, align = 'end' }: ActionDr
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className="bg-white/40 backdrop-blur-xl hover:bg-gray-100/50">
+        <Button
+          variant="outline"
+          className="bg-[#001100]/50 backdrop-blur-xl border border-[#00FF41]/30 text-[#00FF41] hover:bg-[#00FF41]/10 hover:border-[#00FF41]/50 font-mono text-xs uppercase tracking-wider"
+        >
           {label} <ChevronDown className="ml-2 h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-40 bg-white/10 backdrop-blur-lg" align={align}>
+      <DropdownMenuContent
+        className="w-40 border border-[#00FF41]/20 bg-[#0D0D0D]/95 backdrop-blur-xl"
+        align={align}
+        style={{
+          boxShadow: '0 0 30px rgba(0, 255, 65, 0.1), inset 0 0 20px rgba(0, 255, 65, 0.02)',
+        }}
+      >
         <DropdownMenuGroup>{items.map((item, index) => renderItem(item, index))}</DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>

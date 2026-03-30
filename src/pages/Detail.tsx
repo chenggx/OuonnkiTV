@@ -4,10 +4,12 @@ import { apiService } from '@/services/api.service'
 import { type DetailResponse } from '@/types'
 import { useApiStore } from '@/store/apiStore'
 import { useSettingStore } from '@/store/settingStore'
-import { Chip, Button, Spinner, Tooltip, Divider, Select, SelectItem } from '@heroui/react'
+import { Button, Tooltip, Divider, Select, SelectItem } from '@heroui/react'
 import { useDocumentTitle } from '@/hooks'
-import { ArrowUpIcon, ArrowDownIcon } from '@/components/icons'
+import { ArrowUpIcon, ArrowDownIcon, ChevronDownIcon } from '@/components/icons'
 import { motion } from 'framer-motion'
+import { PageBackground } from '@/components/ui/PageBackground'
+import { SpeedIndicator } from '@/components/ui/SpeedIndicator'
 
 export default function Detail() {
   const { sourceCode, vodId } = useParams<{ sourceCode: string; vodId: string }>()
@@ -19,24 +21,22 @@ export default function Detail() {
   const [loading, setLoading] = useState(true)
   const [isReversed, setIsReversed] = useState(playback.defaultEpisodeOrder === 'desc')
   const [currentPageRange, setCurrentPageRange] = useState<string>('')
-  const [openTooltipIndex, setOpenTooltipIndex] = useState<number | null>(null)
   const [episodesPerPage, setEpisodesPerPage] = useState(100)
 
-  // 计算响应式的每页集数 (基于屏幕尺寸和列数)
   useEffect(() => {
     const calculateEpisodesPerPage = () => {
       const width = window.innerWidth
-      let cols = 2 // 手机默认2列
-      let rows = 8 // 默认行数
+      let cols = 2
+      let rows = 8
 
       if (width >= 1024) {
-        cols = 8 // 桌面端8列
-        rows = 5 // 桌面端行数，确保一屏显示完整
+        cols = 8
+        rows = 5
       } else if (width >= 768) {
-        cols = 6 // 平板横屏6列
-        rows = 6 // 平板行数
+        cols = 6
+        rows = 6
       } else if (width >= 640) {
-        cols = 3 // 平板竖屏3列
+        cols = 3
         rows = 8
       }
 
@@ -48,13 +48,11 @@ export default function Detail() {
     return () => window.removeEventListener('resize', calculateEpisodesPerPage)
   }, [])
 
-  // 动态更新页面标题
-  useDocumentTitle(detail?.videoInfo?.title || '视频详情')
+  useDocumentTitle(detail?.videoInfo?.title || 'LOADING... | MATRIX')
 
-  // 获取显示信息的辅助函数
   const getTitle = () => detail?.videoInfo?.title || ''
   const getCover = () =>
-    detail?.videoInfo?.cover || 'https://via.placeholder.com/300x400?text=暂无封面'
+    detail?.videoInfo?.cover || 'https://placehold.jp/30/001100/00FF41/300x450.png?text=NO+POSTER'
   const getType = () => detail?.videoInfo?.type || ''
   const getYear = () => detail?.videoInfo?.year || ''
   const getDirector = () => detail?.videoInfo?.director || ''
@@ -63,7 +61,6 @@ export default function Detail() {
   const getContent = () => detail?.videoInfo?.desc || ''
   const getSourceName = () => detail?.videoInfo?.source_name || ''
 
-  // 计算分页范围（根据正序倒序调整标签）
   const pageRanges = useMemo(() => {
     const totalEpisodes = detail?.videoInfo?.episodes_names?.length || 0
     if (totalEpisodes === 0) return []
@@ -71,11 +68,9 @@ export default function Detail() {
     const ranges: { label: string; value: string; start: number; end: number }[] = []
 
     if (isReversed) {
-      // 倒序：从最后一集开始
       for (let i = 0; i < totalEpisodes; i += episodesPerPage) {
         const start = i
         const end = Math.min(i + episodesPerPage - 1, totalEpisodes - 1)
-        // 倒序时，标签应该显示从大到小
         const labelStart = totalEpisodes - start
         const labelEnd = totalEpisodes - end
         ranges.push({
@@ -86,7 +81,6 @@ export default function Detail() {
         })
       }
     } else {
-      // 正序：从第一集开始
       for (let i = 0; i < totalEpisodes; i += episodesPerPage) {
         const start = i
         const end = Math.min(i + episodesPerPage - 1, totalEpisodes - 1)
@@ -102,7 +96,6 @@ export default function Detail() {
     return ranges
   }, [detail?.videoInfo?.episodes_names?.length, episodesPerPage, isReversed])
 
-  // 当前页显示的剧集
   const currentPageEpisodes = useMemo(() => {
     if (!currentPageRange || !detail?.videoInfo?.episodes_names) return []
 
@@ -111,7 +104,6 @@ export default function Detail() {
     const episodes = detail.videoInfo.episodes_names
 
     if (isReversed) {
-      // 倒序：取出对应范围的集数并反转
       const selectedEpisodes = []
       for (let i = start; i <= end; i++) {
         const actualIndex = totalEpisodes - 1 - i
@@ -125,7 +117,6 @@ export default function Detail() {
       }
       return selectedEpisodes
     } else {
-      // 正序：直接取出对应范围
       return episodes.slice(start, end + 1).map((name, idx) => ({
         name,
         displayIndex: start + idx,
@@ -140,16 +131,15 @@ export default function Detail() {
 
       setLoading(true)
       try {
-        // 根据 sourceCode 找到对应的 API 配置
         const api = videoAPIs.find(api => api.id === sourceCode)
         if (!api) {
-          throw new Error('未找到对应的API配置')
+          throw new Error('API_NOT_FOUND')
         }
 
         const response = await apiService.getVideoDetail(vodId, api)
         setDetail(response)
       } catch (error) {
-        console.error('获取视频详情失败:', error)
+        console.error('Failed to fetch details:', error)
       } finally {
         setLoading(false)
       }
@@ -158,356 +148,319 @@ export default function Detail() {
     fetchDetail()
   }, [sourceCode, vodId, videoAPIs])
 
-  // 初始化当前页范围 & 当切换正序倒序时自动调整页码
   useEffect(() => {
     if (pageRanges.length === 0) return
-
-    // 切换正序倒序时，跳转到第一页
     setCurrentPageRange(pageRanges[0].value)
   }, [pageRanges, isReversed])
 
-  // 处理播放按钮点击
   const handlePlayEpisode = (displayIndex: number) => {
-    // displayIndex 是在当前显示列表中的索引（已考虑倒序）
-    // 需要转换成原始列表中的实际索引
     const actualIndex = isReversed
       ? (detail?.videoInfo?.episodes_names?.length || 0) - 1 - displayIndex
       : displayIndex
-    // 跳转到播放页面,使用新的路由格式,不传递 state
     navigate(`/video/${sourceCode}/${vodId}/${actualIndex}`)
   }
 
-  // 处理长按开始
-  const handleLongPressStart = (index: number) => {
-    const timer = setTimeout(() => {
-      setOpenTooltipIndex(index)
-    }, 500)
-    return () => clearTimeout(timer)
-  }
-
-  // 处理长按结束
-  const handleLongPressEnd = () => {
-    if (openTooltipIndex !== null) {
-      setTimeout(() => {
-        setOpenTooltipIndex(null)
-      }, 300)
-    }
-  }
-
+  // Matrix-style loading screen
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <Spinner size="lg" label="加载中..." />
+      <div className="relative min-h-screen">
+        <PageBackground />
+        <div className="relative z-10 flex min-h-screen items-center justify-center">
+          <div className="flex flex-col items-center gap-6">
+            {/* Cyber loader */}
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full border-2 border-[#003300] animate-spin" />
+              <div
+                className="absolute inset-1 rounded-full border-2 border-transparent border-t-[#00FF41] animate-spin"
+                style={{ animationDirection: 'reverse', animationDuration: '2s' }}
+              />
+              <div
+                className="absolute inset-0 m-auto w-2 h-2 rounded-full bg-[#00FF41]"
+                style={{ boxShadow: '0 0 20px #00FF41' }}
+              />
+            </div>
+            <div className="text-center">
+              <p className="text-[#00FF41] font-mono text-sm animate-pulse tracking-wider">
+                {'>'} FETCHING_DATA...
+              </p>
+              <p className="text-[#00FF41]/50 font-mono text-xs mt-2">
+                PLEASE_WAIT...
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
 
   if (!detail || detail.code !== 200) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <p className="text-gray-500">获取视频详情失败</p>
+      <div className="relative min-h-screen">
+        <PageBackground />
+        <div className="relative z-10 flex min-h-screen items-center justify-center">
+          <div className="text-center">
+            <h2 className="mb-4 text-2xl font-bold text-[#00FF41] font-['Orbitron'] uppercase tracking-wider"
+              style={{ textShadow: '0 0 20px rgba(0, 255, 65, 0.5)' }}>
+              ERROR: DATA_FETCH_FAILED
+            </h2>
+            <Button
+              onPress={() => navigate(-1)}
+              className="bg-transparent text-[#00FF41] border border-[#00FF41] font-mono uppercase tracking-wider hover:bg-[#00FF41]/10"
+            >
+              {'<'} GO_BACK
+            </Button>
+          </div>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto overflow-x-hidden p-4 pb-15 md:pt-10">
-      {/* 视频信息卡片 */}
+    <div className="relative min-h-screen">
+      <PageBackground />
 
-      <motion.div
-        className="flex gap-5"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        {/* 封面图 */}
-        <motion.img
-          src={getCover()}
-          alt={getTitle()}
-          className="hidden w-70 rounded-lg shadow-lg md:block"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        />
-
-        {/* 详细信息 */}
+      <div className="relative z-10 p-6 pb-20">
+        {/* Main content */}
         <motion.div
-          className="flex flex-1 flex-col gap-3 rounded-lg bg-white/40 p-4 shadow-lg/5 backdrop-blur-md"
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
+          className="flex flex-col gap-6 lg:flex-row"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
         >
-          {/* 移动端详情 */}
-          <div className="md:hidden">
-            <div className="flex h-auto w-full flex-row justify-center gap-4">
-              <motion.img
+          {/* Cover - Desktop left */}
+          <motion.div
+            className="hidden lg:block lg:w-72"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
+            <div
+              className="overflow-hidden rounded border border-[#00FF41]/30 bg-[#0D0D0D]"
+              style={{
+                boxShadow: '0 0 30px rgba(0, 255, 65, 0.1), inset 0 0 30px rgba(0, 255, 65, 0.02)',
+              }}
+            >
+              <img
                 src={getCover()}
                 alt={getTitle()}
-                className="h-full w-1 flex-1/2 rounded-lg object-cover shadow-lg"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4, delay: 0.25 }}
+                className="aspect-[2/3] w-full object-cover"
               />
-              <motion.div
-                className="flex flex-1/2 flex-col gap-1 self-end"
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.4, delay: 0.3 }}
-              >
-                {getTitle() && (
-                  <h1 className="text-[1rem] font-bold sm:text-2xl">
-                    <span className="line-clamp-2 text-gray-800">{getTitle()}</span>
-                  </h1>
-                )}
-                <div className="text-[0.7rem] sm:text-[1rem]">
-                  {getDirector() && (
-                    <div className="text-gray-500">
-                      <span className="font-semibold text-gray-700">导演：</span>
-                      <span className="line-clamp-2">{getDirector()}</span>
-                    </div>
-                  )}
-
-                  {getActor() && (
-                    <div className="text-gray-500">
-                      <span className="font-semibold text-gray-700">演员：</span>
-                      <span className="line-clamp-2">{getActor()}</span>
-                    </div>
-                  )}
-                </div>
-                <motion.div
-                  className="flex-row flex-wrap text-[0.4rem]"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.4, delay: 0.4 }}
-                >
-                  {[
-                    { color: 'primary' as const, value: getSourceName() },
-                    { color: 'secondary' as const, value: getYear() },
-                    { color: 'warning' as const, value: getType() },
-                    { color: 'danger' as const, value: getArea() },
-                  ].map((chip, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, scale: 0.5 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.2, delay: 0.4 + index * 0.05 }}
-                      style={{ display: 'inline-block' }}
-                    >
-                      <Chip size="sm" color={chip.color} variant="shadow" className="mr-1 mb-1">
-                        {chip.value}
-                      </Chip>
-                    </motion.div>
-                  ))}
-                </motion.div>
-              </motion.div>
             </div>
-            <div>
-              {getContent() && (
-                <motion.div
-                  className="mt-3 line-clamp-5 text-[0.8rem] text-gray-600 sm:text-[1rem]"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.5 }}
-                >
-                  <div dangerouslySetInnerHTML={{ __html: getContent() }} />
-                </motion.div>
-              )}
-            </div>
-          </div>
-
-          {/* 标题 */}
-          {getTitle() && (
-            <motion.h1
-              className="hidden text-3xl font-bold md:block"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.3 }}
-            >
-              <span className="text-gray-800">{getTitle()}</span>
-            </motion.h1>
-          )}
-          <motion.div
-            className="hidden flex-wrap gap-x-1 gap-y-2 md:flex"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: 0.4 }}
-          >
-            {[
-              { color: 'primary' as const, value: getSourceName(), delay: 0 },
-              { color: 'secondary' as const, value: getYear(), delay: 0.05 },
-              { color: 'warning' as const, value: getType(), delay: 0.1 },
-              { color: 'danger' as const, value: getArea(), delay: 0.15 },
-            ].map((chip, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3, delay: 0.4 + chip.delay }}
-              >
-                <Chip color={chip.color} variant="shadow" className="mr-2">
-                  {chip.value}
-                </Chip>
-              </motion.div>
-            ))}
           </motion.div>
 
-          {/* 详细信息 */}
+          {/* Details panel - Terminal style */}
           <motion.div
-            className="mt-1 hidden flex-col gap-2 pl-1 md:flex"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
+            className="flex-1 rounded border border-[#00FF41]/20 bg-[#0D0D0D]/95 p-6 backdrop-blur-xl"
+            style={{
+              boxShadow: '0 0 30px rgba(0, 255, 65, 0.05), inset 0 0 30px rgba(0, 255, 65, 0.02)',
+            }}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
           >
-            {getDirector() && (
-              <motion.div
-                className="text-gray-600"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.4, delay: 0.6 }}
+            {/* Mobile cover */}
+            <div className="mb-6 lg:hidden">
+              <div className="flex gap-4">
+                <img
+                  src={getCover()}
+                  alt={getTitle()}
+                  className="h-40 w-28 rounded border border-[#00FF41]/30 object-cover shadow-lg"
+                />
+                <div className="flex flex-col justify-between py-1">
+                  <h1 className="text-xl font-bold text-[#00FF41] font-['Orbitron'] uppercase line-clamp-2 tracking-wider"
+                    style={{ textShadow: '0 0 15px rgba(0, 255, 65, 0.5)' }}>
+                    {getTitle()}
+                  </h1>
+                  <div className="flex flex-wrap gap-2">
+                    <span
+                      className="tag-badge primary font-mono text-xs"
+                      style={{
+                        background: 'rgba(0, 255, 65, 0.15)',
+                        color: '#00FF41',
+                        border: '1px solid rgba(0, 255, 65, 0.4)',
+                        boxShadow: '0 0 10px rgba(0, 255, 65, 0.2)',
+                      }}
+                    >
+                      {getSourceName()}
+                    </span>
+                    <span className="tag-badge font-mono text-xs">
+                      {getYear()}
+                    </span>
+                    <span className="tag-badge font-mono text-xs">
+                      {getType()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Desktop title */}
+            <h1
+              className="hidden text-3xl font-bold text-[#00FF41] font-['Orbitron'] lg:block uppercase tracking-wider"
+              style={{
+                textShadow: '0 0 20px rgba(0, 255, 65, 0.5), 0 0 40px rgba(0, 255, 65, 0.3)',
+              }}
+            >
+              {getTitle()}
+            </h1>
+
+            {/* Desktop tags */}
+            <div className="mt-4 hidden flex-wrap gap-3 lg:flex">
+              <span
+                className="tag-badge primary font-mono text-xs"
+                style={{
+                  background: 'rgba(0, 255, 65, 0.15)',
+                  color: '#00FF41',
+                  border: '1px solid rgba(0, 255, 65, 0.4)',
+                  boxShadow: '0 0 10px rgba(0, 255, 65, 0.2)',
+                }}
               >
-                <span className="font-semibold text-gray-900">导演：</span>
-                <span>{getDirector()}</span>
-              </motion.div>
+                {getSourceName()}
+              </span>
+              <span className="tag-badge font-mono text-xs">{getYear()}</span>
+              <span className="tag-badge font-mono text-xs">{getType()}</span>
+              {getArea() && (
+                <span className="tag-badge font-mono text-xs">{getArea()}</span>
+              )}
+            </div>
+
+            {/* Speed indicator */}
+            {sourceCode && vodId && (
+              <div className="mt-4">
+                <SpeedIndicator
+                  sourceCode={sourceCode}
+                  vodId={vodId}
+                  variant="expanded"
+                />
+              </div>
             )}
 
-            {getActor() && (
-              <motion.div
-                className="text-gray-600"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.4, delay: 0.65 }}
-              >
-                <span className="font-semibold text-gray-900">演员：</span>
-                <span>{getActor()}</span>
-              </motion.div>
-            )}
+            {/* Director and actors */}
+            <div className="mt-6 space-y-3 font-mono text-sm">
+              {getDirector() && (
+                <div className="flex items-start gap-3">
+                  <span className="w-16 text-xs font-semibold text-[#00FF41] uppercase tracking-wider">Director</span>
+                  <span className="text-[#00FF41]/80">{getDirector()}</span>
+                </div>
+              )}
+              {getActor() && (
+                <div className="flex items-start gap-3">
+                  <span className="w-16 text-xs font-semibold text-[#00FF41] uppercase tracking-wider">Cast</span>
+                  <span className="text-[#00FF41]/80 line-clamp-1">{getActor()}</span>
+                </div>
+              )}
+            </div>
 
+            {/* Description - Terminal details style */}
             {getContent() && (
-              <motion.div
-                className="mt-3 text-gray-600"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.7 }}
-              >
-                <div dangerouslySetInnerHTML={{ __html: getContent() }} />
-              </motion.div>
+              <details className="mt-6 group font-mono">
+                <summary className="flex items-center gap-2 cursor-pointer text-[#00FF41]/70 hover:text-[#00FF41]">
+                  <span className="text-xs font-semibold uppercase tracking-wider">{'>>'} Synopsis</span>
+                  <ChevronDownIcon size={14} className="transition-transform group-open:rotate-180" />
+                </summary>
+                <div
+                  className="mt-3 p-4 rounded border border-[#00FF41]/20 bg-[#001100]/50"
+                  style={{ boxShadow: 'inset 0 0 20px rgba(0, 255, 65, 0.05)' }}
+                >
+                  <p
+                    className="text-sm leading-relaxed text-[#00FF41]/70"
+                    dangerouslySetInnerHTML={{ __html: getContent() }}
+                  />
+                </div>
+              </details>
             )}
           </motion.div>
         </motion.div>
-      </motion.div>
 
-      {/* 播放列表 */}
-      {detail?.videoInfo?.episodes_names && detail.videoInfo.episodes_names.length > 0 && (
-        <motion.div
-          className="mt-8 flex flex-col"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-        >
+        {/* Episode list */}
+        {detail?.videoInfo?.episodes_names && detail.videoInfo.episodes_names.length > 0 && (
           <motion.div
-            className="flex flex-col gap-2 p-3 pr-0 pl-1"
-            initial={{ opacity: 0, y: -10 }}
+            className="mt-8 rounded border border-[#00FF41]/20 bg-[#0D0D0D]/95 p-4 backdrop-blur-xl"
+            style={{
+              boxShadow: '0 0 30px rgba(0, 255, 65, 0.05), inset 0 0 30px rgba(0, 255, 65, 0.02)',
+            }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.4 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
           >
-            <div className="flex items-center justify-between">
-              <div className="flex flex-row items-end gap-2">
-                <motion.h2
-                  className="text-2xl font-semibold text-gray-900"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4, delay: 0.45 }}
+            {/* Header */}
+            <div className="mb-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <h2
+                  className="text-xl font-bold text-[#00FF41] font-['Orbitron'] uppercase tracking-wider"
+                  style={{
+                    textShadow: '0 0 15px rgba(0, 255, 65, 0.5)',
+                  }}
                 >
-                  选集
-                </motion.h2>
+                  {'>>'} Episodes
+                </h2>
+                <span className="tag-badge font-mono text-xs">
+                  TOTAL: {detail.videoInfo.episodes_names.length}
+                </span>
               </div>
-              <div className="flex items-end">
+
+              <div className="flex items-center gap-3">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onPress={() => setIsReversed(!isReversed)}
+                  startContent={isReversed ? <ArrowUpIcon size={18} /> : <ArrowDownIcon size={18} />}
+                  className="text-[#00FF41]/70 hover:bg-[#00FF41]/10 hover:text-[#00FF41] border border-[#00FF41]/20 font-mono text-xs uppercase tracking-wider"
+                >
+                  {isReversed ? 'ASC' : 'DESC'}
+                </Button>
                 {pageRanges.length > 1 && (
                   <Select
                     size="sm"
                     selectedKeys={[currentPageRange]}
                     onChange={e => setCurrentPageRange(e.target.value)}
-                    className="w-35"
+                    className="w-36"
                     classNames={{
-                      trigger: 'bg-white/30 backdrop-blur-md border border-gray-200',
-                      value: 'text-gray-800 font-medium',
-                      popoverContent: 'bg-white/40 backdrop-blur-2xl border border-gray-200/50',
+                      trigger: 'bg-[#001100] backdrop-blur-md border border-[#00FF41]/30 text-[#00FF41] font-mono',
+                      value: 'text-[#00FF41] font-mono',
+                      popoverContent: 'bg-[#0D0D0D]/95 backdrop-blur-xl border border-[#00FF41]/20',
                     }}
-                    aria-label="选择集数范围"
-                    placeholder="选择集数范围"
+                    aria-label="Select episode range"
                   >
                     {pageRanges.map(range => (
-                      <SelectItem key={range.value}>{range.label}</SelectItem>
+                      <SelectItem key={range.value} className="text-[#00FF41] font-mono">
+                        {range.label}
+                      </SelectItem>
                     ))}
                   </Select>
                 )}
               </div>
             </div>
-            <Divider></Divider>
-          </motion.div>
-          {/* 列表 */}
-          <motion.div
-            className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6 lg:grid-cols-8"
-            key={currentPageRange}
-          >
-            {currentPageEpisodes.map(({ name, displayIndex }, index) => (
-              <motion.div
-                key={`${name}-${displayIndex}`}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{
-                  duration: 0.3,
-                  delay: index * 0.03,
-                  ease: 'easeOut',
-                }}
-              >
-                <Tooltip
-                  content={name}
-                  placement="top"
-                  delay={1000}
-                  isOpen={openTooltipIndex === displayIndex}
-                  onOpenChange={open => {
-                    if (!open) setOpenTooltipIndex(null)
+
+            <Divider className="bg-[#00FF41]/10" />
+
+            {/* Episode grid */}
+            <div className="mt-4 grid grid-cols-4 gap-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10">
+              {currentPageEpisodes.map(({ name, displayIndex }, index) => (
+                <motion.div
+                  key={`${name}-${displayIndex}`}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{
+                    duration: 0.3,
+                    delay: index * 0.02,
+                    ease: 'easeOut',
                   }}
                 >
-                  <Button
-                    size="md"
-                    color="default"
-                    variant="shadow"
-                    className="w-full border border-gray-200 bg-white/30 text-gray-800 drop-shadow-2xl backdrop-blur-md transition-all duration-300 hover:scale-105 hover:bg-black/80 hover:text-white"
-                    onPress={() => handlePlayEpisode(displayIndex)}
-                    onPressStart={() => handleLongPressStart(displayIndex)}
-                    onPressEnd={handleLongPressEnd}
-                  >
-                    <span className="overflow-hidden text-ellipsis whitespace-nowrap">{name}</span>
-                  </Button>
-                </Tooltip>
-              </motion.div>
-            ))}
+                  <Tooltip content={name} placement="top" delay={500}>
+                    <button
+                      className="episode-btn w-full h-12 px-2 font-mono text-xs uppercase tracking-wider"
+                      onClick={() => handlePlayEpisode(displayIndex)}
+                    >
+                      <span className="overflow-hidden text-ellipsis whitespace-nowrap">{name}</span>
+                    </button>
+                  </Tooltip>
+                </motion.div>
+              ))}
+            </div>
           </motion.div>
-          <motion.div
-            className="mt-4 flex items-end justify-between pr-4"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.4 }}
-          >
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button
-                size="sm"
-                variant="light"
-                onPress={() => setIsReversed(!isReversed)}
-                startContent={isReversed ? <ArrowUpIcon size={18} /> : <ArrowDownIcon size={18} />}
-                className="min-w-unit-16 text-sm text-gray-600"
-              >
-                {isReversed ? '正序' : '倒序'}
-              </Button>
-            </motion.div>
-            <span className="text-sm text-gray-600">
-              共 {detail.videoInfo.episodes_names.length} 集
-            </span>
-          </motion.div>
-        </motion.div>
-      )}
+        )}
+      </div>
     </div>
   )
 }

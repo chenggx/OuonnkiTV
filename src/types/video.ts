@@ -74,3 +74,10 @@ export interface VideoApi {
   isEnabled: boolean
   updatedAt: Date
 }
+
+// 网速检测结果
+export interface SpeedResult {
+  speed: number // 速度值 (ms)
+  level: 'fast' | 'medium' | 'slow'
+  timestamp: number // 检测时间戳
+}
