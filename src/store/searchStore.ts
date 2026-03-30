@@ -5,7 +5,6 @@ import type { SearchHistory, SearchHistoryItem, VideoItem } from '@/types'
 import { v4 as uuidv4 } from 'uuid'
 
 // 搜索结果缓存最大数量
-// 搜索结果缓存最大数量
 const MAX_CACHE_SIZE = 10
 // 缓存过期时间 (默认值, 实际使用 SettingStore 中的配置)
 const DEFAULT_CACHE_EXPIRY_HOURS = 24
@@ -155,7 +154,7 @@ export const useSearchStore = create<SearchStore>()(
           const isExpired = now - cached.timestamp > expiryTime
 
           if (isExpired) {
-            console.log(`缓存已过期: ${query}`)
+            console.log(`Cache expired: ${query}`)
             // 删除过期缓存
             set(state => {
               delete state.searchResultsCache[query]
@@ -172,7 +171,7 @@ export const useSearchStore = create<SearchStore>()(
           )
 
           if (cached.videoSourcesSnapshot && cached.videoSourcesSnapshot !== currentSnapshot) {
-            console.log(`视频源状态已变更, 缓存废弃: ${query}`)
+            console.log(`Video sources changed, cache invalidated: ${query}`)
             // 删除无效缓存
             set(state => {
               delete state.searchResultsCache[query]
@@ -284,7 +283,7 @@ export const useSearchStore = create<SearchStore>()(
             })
 
             if (removedCount > 0) {
-              console.log(`清理了 ${removedCount} 个过期缓存`)
+              console.log(`Cleaned ${removedCount} expired cache entries`)
             }
           })
         },

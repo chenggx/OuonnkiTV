@@ -1,8 +1,31 @@
+// 图片扩展名集合（用于快速查找）
+const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'])
+
+// 跳过代理的 URL 前缀
+const SKIP_PROXY_PREFIXES = ['/proxy', 'http://localhost', 'https://placehold']
+
 // 判断是否为图片请求
-const isImageRequest = (url: string) => {
-  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp']
-  return imageExtensions.some(ext => url.toLowerCase().includes(ext)) ||
-    url.includes('doubanio.com')
+export const isImageRequest = (url: string): boolean => {
+  try {
+    const urlObj = new URL(url)
+    const pathname = urlObj.pathname.toLowerCase()
+    const ext = pathname.split('.').pop()
+    if (ext && IMAGE_EXTENSIONS.has(ext)) return true
+  } catch {
+    // 如果不是有效 URL，检查扩展名
+    const ext = url.split('.').pop()?.toLowerCase()
+    if (ext && IMAGE_EXTENSIONS.has(ext)) return true
+  }
+  return url.includes('doubanio.com')
+}
+
+// 统一的图片代理 URL 处理
+export const proxyImageUrl = (url: string | undefined): string | undefined => {
+  if (!url) return url
+  if (SKIP_PROXY_PREFIXES.some(prefix => url.startsWith(prefix))) {
+    return url
+  }
+  return `/proxy?url=${encodeURIComponent(url)}`
 }
 
 // 统一的代理处理逻辑

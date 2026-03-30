@@ -20,13 +20,32 @@ interface SpeedCache {
   [key: string]: SpeedResult
 }
 
-// 全局缓存
+// 全局缓存（LRU 限制）
+const MAX_CACHE_SIZE = 50
 const speedCache: SpeedCache = {}
+const cacheOrder: string[] = []
 
 // 正在进行的测速请求
 const pendingRequests: Set<string> = new Set()
 
 const getCacheKey = (sourceCode: string, vodId: string) => `${sourceCode}_${vodId}`
+
+// LRU 缓存管理
+const setCache = (key: string, value: SpeedResult) => {
+  if (cacheOrder.includes(key)) {
+    // 已存在，移到末尾
+    cacheOrder.push(cacheOrder.splice(cacheOrder.indexOf(key), 1)[0])
+  } else {
+    // 新增
+    if (cacheOrder.length >= MAX_CACHE_SIZE) {
+      // 淘汰最老的
+      const oldest = cacheOrder.shift()
+      if (oldest) delete speedCache[oldest]
+    }
+    cacheOrder.push(key)
+  }
+  speedCache[key] = value
+}
 
 const calculateSpeedLevel = (speed: number): 'fast' | 'medium' | 'slow' => {
   if (speed < SPEED_THRESHOLDS.fast) return 'fast'
@@ -133,8 +152,8 @@ export const useVideoSpeed = (
             timestamp: Date.now(),
           }
 
-          // 缓存结果
-          speedCache[cacheKey] = result
+          // 缓存结果（LRU）
+          setCache(cacheKey, result)
           pendingRequests.delete(cacheKey)
           setSpeed(result)
           setLoading(false)

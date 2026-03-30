@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { proxyImageUrl } from '@/utils'
 
 // 豆瓣推荐项类型
 export interface DoubanSubject {
@@ -15,22 +16,6 @@ const DOUBAN_API_BASE = 'https://movie.douban.com/j'
 // 获取代理 URL
 const getProxyUrl = (targetUrl: string) => {
   return `/proxy?url=${encodeURIComponent(targetUrl)}`
-}
-
-// 豆瓣图片代理域名
-const DOUBAN_IMG_DOMAINS = ['doubanio.com']
-
-// 判断是否为豆瓣图片
-const isDoubanImage = (url: string) => {
-  return DOUBAN_IMG_DOMAINS.some(domain => url.includes(domain))
-}
-
-// 代理豆瓣图片
-const proxyImageUrl = (url: string) => {
-  if (isDoubanImage(url)) {
-    return getProxyUrl(url)
-  }
-  return url
 }
 
 export const useDoubanRecommend = () => {

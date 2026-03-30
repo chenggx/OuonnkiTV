@@ -13,16 +13,8 @@ import { PaginationConfig } from '@/config/video.config'
 import { useDocumentTitle } from '@/hooks'
 import { SpeedIndicator } from '@/components/ui/SpeedIndicator'
 import { PageBackground } from '@/components/ui/PageBackground'
+import { proxyImageUrl } from '@/utils'
 import { motion } from 'framer-motion'
-
-// Proxy image URL
-const proxyImageUrl = (url: string | undefined) => {
-  if (!url) return url
-  if (url.startsWith('/proxy') || url.startsWith('http://localhost') || url.startsWith('https://placehold')) {
-    return url
-  }
-  return `/proxy?url=${encodeURIComponent(url)}`
-}
 
 // Matrix-style Video Card
 function VideoCard({ item, index, onClick }: { item: VideoItem; index: number; onClick: () => void }) {
